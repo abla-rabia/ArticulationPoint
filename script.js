@@ -1,6 +1,8 @@
 let id = 1;
 let links = []; // Array to store created links
 let nodes= [] //array to store created nodes
+let graph=[];//array that holds connections of each node of the graph present in nodes ....
+let nombreDeSommets = 0;
 // Add Node button
 document.getElementById("addNode").addEventListener("click", function () {
     let n = document.createElement("p");
@@ -19,6 +21,8 @@ document.getElementById("addNode").addEventListener("click", function () {
     id++;
     document.body.appendChild(n);
     nodes.push(n);
+    graph.length=0;
+    nombreDeSommets++;
 
     let isDragging = false; // Flag to track dragging state
     let offsetX, offsetY; // Variables to store the initial click position
@@ -50,7 +54,6 @@ document.getElementById("addNode").addEventListener("click", function () {
 // Add Link button
 document.getElementById("addLink").addEventListener("click", function () {
     let selectedNodes = []; // Array to store selected nodes for linking
-
     // First click to select nodes
     document.addEventListener("click", function selectNode(event) {
         let targetNode = event.target;
@@ -94,6 +97,7 @@ function createLinkBetween(node1, node2) {
     // Append the link to the body and store it
     document.body.appendChild(link.element);
     links.push(link);
+    graph.length=0;
 
     updateLinkPosition(link); // Position the link initially
 }
@@ -140,28 +144,58 @@ function updateLinks(node) {
 }
 
 
-function depthFirstSearch(graph, start, visited = new Set()) {
+function depthFirstSearch(graph, start, visited) {
     if (!visited.has(start)) {
-        console.log(start); // Process the node
+        console.log(start.id); // Process the node
         visited.add(start);
         
-        for (const neighbor in graph) {
+        for (const neighbor of graph) {
             depthFirstSearch(graph, neighbor, visited);
         }
     }
 }
+document.getElementById("reset").addEventListener("click", function() {
+    // Remove all nodes from the DOM
+    nodes.forEach(node => {
+        document.body.removeChild(node);
+    });
+
+    // Remove all links from the DOM
+    links.forEach(link => {
+        document.body.removeChild(link.element);
+    });
+    id=1;
+    // Clear arrays
+    nodes.length = 0; // Reset nodes array
+    links.length = 0; // Reset links array
+    graph.length = 0; // Reset graph array
+    nombreDeSommets = 0; // Reset the number of vertices
+    document.body.removeChild(document.getElementById("textt"));
+});
+
 document.getElementById("composantsNumber").addEventListener("click",function(){
-    let visited;
-    depthFirstSearch(nodes,nodes[0],visited)
-    console.log(visited)
+    let pointsArticulation=trouverPointsArticulation();
     
+    let points = [];
+    for (let artPoint of pointsArticulation){
+        let nd= document.getElementById(`node${artPoint+1}`);
+        nd.style.backgroundColor="blue";
+        points.push(artPoint+1);
+    }
+    let t = document.createElement("p");
+    t.id="textt"
+    t.textContent = `Les points d'articulation sont : ${points.join(', ')}`;
+    document.body.appendChild(t);
+    
+
 })
 function composantsCalculator(graph){
     let noVisited=new Set();    
     let numberOfComposants=0;
-    let visited;
+    let visited=new Set();
+    noVisited.add(nodes[0]);
 
-    for (const i in noVisited){
+    for (const i of noVisited){
         depthFirstSearch(graph,i,visited);
         if (visited=nodes){
             numberOfComposants++;
@@ -173,5 +207,83 @@ function composantsCalculator(graph){
         }
 
 
+    }
+}
+
+
+// Fonction principale pour trouver les points d'articulation dans un graphe
+function trouverPointsArticulation() {
+    const visited = new Array(nombreDeSommets).fill(false);
+    const num = new Array(nombreDeSommets).fill(-1);
+    const low = new Array(nombreDeSommets).fill(-1);
+    const parent = new Array(nombreDeSommets).fill(null);
+    const pointsArticulation = [];
+    let temps = 0;
+    if (graph.length==0){
+        transformToGraph();
+    }
+    console.log(graph);
+
+    // Fonction DFS pour explorer les sommets
+    function DFS(u) {
+        console.log(graph[u]);
+        visited[u] = true;
+        num[u] = low[u] = temps++;
+        let enfants = 0;
+
+        // Parcourir tous les voisins de u
+        for (let v of graph[u]) {
+            if (!visited[v]) { // Si v n'est pas visité, il devient un enfant de u dans le DFS
+                parent[v] = u;
+                enfants++;
+                DFS(v);
+                // Mise à jour de low[u] en fonction de low[v]
+                low[u] = Math.min(low[u], low[v]);
+
+                // Vérifier si u est un point d'articulation
+                if (parent[u] === null && enfants > 1) {
+                    pointsArticulation.push(u); // cas où u est la racine et a plus d'un enfant
+                }
+                if (parent[u] !== null && low[v] >= num[u]) {
+                    pointsArticulation.push(u);
+                }
+            } else if (v !== parent[u]) { // Si v est déjà visité et n'est pas le parent de u
+                low[u] = Math.min(low[u], num[v]);
+            }
+        }
+    }
+
+    // Appliquer DFS à chaque sommet non visité
+    for (let u = 0; u < nombreDeSommets; u++) {
+        if (!visited[u]) {
+            DFS(u);
+        }
+    }
+
+    // Retourner la liste des points d'articulation
+    return Array.from(new Set(pointsArticulation)); // Utiliser un Set pour éviter les doublons
+}
+
+// Exemple de graphe (sous forme de liste d'adjacence)
+
+
+
+
+function transformToGraph(){
+    for (let i of nodes){
+        let id=parseInt(i.textContent,10)-1;
+        let connection=new Set();
+        for (let l of links){
+            let id1=parseInt(l.nodes[0].textContent,10)-1;
+            let id2=parseInt(l.nodes[1].textContent,10)-1;
+            if (id==id1){
+                connection.add(id2);
+            }
+            if (id==id2){
+                connection.add(id1);
+            }
+        }
+        let con= [...connection];
+        graph.push(con);
     }
 }
