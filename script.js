@@ -6,10 +6,11 @@ let nombreDeSommets = 0;
 // Add Node button
 document.getElementById("addNode").addEventListener("click", function () {
     let n = document.createElement("p");
+    n.classList.add("node"); // Ajoute une classe pour les nœuds
+
     n.style.padding = "6px";
     n.style.position = "absolute";
     n.style.textAlign = "center";
-    n.style.backgroundColor = "green";
     n.style.borderRadius = "100px";
     n.style.width = "30px";
     n.style.color = "white";
@@ -63,10 +64,8 @@ document.getElementById("addLink").addEventListener("click", function () {
             if (selectedNodes.includes(targetNode)) {
                 // If the node is already selected, remove it from the selection
                 selectedNodes.splice(selectedNodes.indexOf(targetNode), 1);
-                targetNode.style.backgroundColor = "green"; // Reset color
             } else {
                 selectedNodes.push(targetNode);
-                targetNode.style.backgroundColor = "red"; // Change color to indicate selection
             }
 
             if (selectedNodes.length === 2) {
@@ -89,15 +88,14 @@ function createLinkBetween(node1, node2) {
         element: document.createElement("div"),
         nodes: [node1, node2]
     };
-
+    link.element.classList.add("link"); // Ajoute une classe pour les liens
     link.element.style.position = "absolute";
-    link.element.style.backgroundColor = "blue";
     link.element.style.height = "2px"; // Line thickness
 
     // Append the link to the body and store it
     document.body.appendChild(link.element);
     links.push(link);
-    graph.length=0;
+ graph.length=0;
 
     updateLinkPosition(link); // Position the link initially
 }
@@ -179,12 +177,19 @@ document.getElementById("composantsNumber").addEventListener("click",function(){
     let points = [];
     for (let artPoint of pointsArticulation){
         let nd= document.getElementById(`node${artPoint+1}`);
-        nd.style.backgroundColor="blue";
+        nd.style.backgroundColor="#ffccbc";
         points.push(artPoint+1);
     }
-    let t = document.createElement("p");
+    let t;
+    if (document.getElementById("textt")==undefined){
+     t = document.createElement("p");
+    }
+    else{
+    t=document.getElementById("textt");
+    }
+    t.className="textt2"
     t.id="textt"
-    t.textContent = `Les points d'articulation sont : ${points.join(', ')}`;
+    t.textContent = (points.length!=0)?`Les points d'articulation sont : ${points.join(', ')}` :"Pas de points d'articulation dans le graphe.";
     document.body.appendChild(t);
     
 
